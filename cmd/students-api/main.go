@@ -12,6 +12,7 @@ import (
 
 	"github.com/Naveen13s/Students-API/internal/config"
 	"github.com/Naveen13s/Students-API/internal/http/handlers/student"
+	"github.com/Naveen13s/Students-API/internal/storage/sqlite"
 )
 
 func main() {
@@ -20,10 +21,18 @@ func main() {
 	cfg := config.MustLoad()
 
 	//database setup
+	storage, err := sqlite.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	slog.Info("storage initialized", slog.String("env", cfg.Env), slog.String("version", "1.0.0"))
+
 	//setup router
 	router := http.NewServeMux()
 
-	router.HandleFunc("/api/students", student.New())
+	router.HandleFunc("/api/students", student.New(storage))
+	router.HandleFunc("/api/students/{id}", student.GetById())
 
 	//setup server
 	server := http.Server{
